@@ -4,7 +4,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node --experimental-modules index.js"
+    "start": "node index.js"
   },
   "repository": "https://github.com/Sandeep-Tech/placement-management-api.git",
   "author": "Sandeep Sharma <sandeeptech8@gmail.com>",

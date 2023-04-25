@@ -20,7 +20,9 @@ The key difference between these two SDKs is that firebase/app is used to access
  */
 
 import admin from "firebase-admin";
-import SERVICE_ACCOUNT from "../service-account.json" assert { type: "json" };
+import fs from 'fs';
+const serviceAccountPath = "./service-account.json";
+const SERVICE_ACCOUNT = JSON.parse(fs.readFileSync(serviceAccountPath, "utf8"));
 
 // Initialize the Firebase Admin SDK
 admin.initializeApp({
