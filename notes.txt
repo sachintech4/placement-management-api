@@ -1,0 +1,2 @@
+- command to deploy the function on gcloud:
+gcloud functions deploy gcp-func-test --entry-point app --runtime nodejs16 --trigger-http --project placement-management-12706   
