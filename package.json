@@ -4,13 +4,14 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "npx functions-framework --target=hey"
+    "start": "npx functions-framework --target=app"
   },
   "repository": "https://github.com/Sandeep-Tech/placement-management-api.git",
   "author": "Sandeep Sharma <sandeeptech8@gmail.com>",
   "license": "MIT",
   "dependencies": {
     "@firebase/auth": "^0.23.0",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "firebase-admin": "^11.7.0"
   },
