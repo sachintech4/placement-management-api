@@ -29,11 +29,10 @@ admin.initializeApp({
   credential: admin.credential.cert(SERVICE_ACCOUNT)
 });
 
-const email = "sandeeptech8@gmail.com";
-
-let user = null;
 
 // fetch the user
+let user = null;
+const email = "sandeeptech8@gmail.com";
 try {
   user = await admin.auth().getUserByEmail(email);
 } catch (error) {
