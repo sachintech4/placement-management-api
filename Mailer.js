@@ -21,7 +21,7 @@ class Mailer {
     };
     
     try {
-      const info = await transporter.sendMail(opts); 
+      const info = await this.transporter.sendMail(opts); 
       console.log(`Welcome email sent to ${receiverEmailId}`);
       console.log(info.response)
     } catch (error) {
