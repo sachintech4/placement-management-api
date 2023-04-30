@@ -5,23 +5,23 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const {
-  VITE_apiKey,
-  VITE_authDomain,
-  VITE_projectId,
-  VITE_storageBucket,
-  VITE_messagingSenderId,
-  VITE_appId,
-  VITE_measurementId,
+  apiKey,
+  authDomain,
+  projectId,
+  storageBucket,
+  messagingSenderId,
+  appId,
+  measurementId,
 } = process.env;
 
 const firebaseConfig = {
-  apiKey: VITE_apiKey,
-  authDomain: VITE_authDomain,
-  projectId: VITE_projectId,
-  storageBucket: VITE_storageBucket,
-  messagingSenderId: VITE_messagingSenderId,
-  appId: VITE_appId,
-  measurementId: VITE_measurementId,
+  apiKey: apiKey,
+  authDomain: authDomain,
+  projectId: projectId,
+  storageBucket: storageBucket,
+  messagingSenderId: messagingSenderId,
+  appId: appId,
+  measurementId: measurementId,
 };
 
 const app = initializeApp(firebaseConfig);
