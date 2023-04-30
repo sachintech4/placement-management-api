@@ -38,6 +38,7 @@ const deleteUser = async (uid) => {
 
 // create new user
 app.post("/users", async (req, res) => {
+
   const {
     email,
     password = generatePassword(),
