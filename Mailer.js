@@ -19,9 +19,9 @@ class Mailer {
       subject: "Welcome to Placement Manager",
       text: `Hello ${userName}, an account has been created for you in the TSCS palcement manager web app. Your email id is ${receiverEmailId} and your login password id ${presetPassword}. We strongly recommend that you change the default password as soon as possible. Thank you.`,
     };
-    
+
     try {
-      const info = await transporter.sendMail(opts); 
+      const info = await this.transporter.sendMail(opts); 
       console.log(`Welcome email sent to ${receiverEmailId}`);
       console.log(info.response)
     } catch (error) {
