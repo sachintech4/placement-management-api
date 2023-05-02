@@ -67,13 +67,28 @@ app.post("/users", async (req, res) => {
   try {
     newlyCreatedUserRecord = await admin.auth().createUser(creds);
   } catch (error) {
+    // log the error details
     console.error(
       `failed to create user ${creds.displayName} (${creds.email})`
     );
-    // todo: return request failed as the res
+    console.error(error.code);
+    console.error(error);
+
+    // prepare and send the res
+    
+    // handle "email already exists" error
+    if (error.code === "auth/email-already-exists") {
+      res.status(403).send({
+        code: "email-already-exists",
+        message: "Given email already exists for another user",
+      });
+      return;      
+    }
+
+    // handle rest of the errors
     res.status(403).send({
-      msg: `failed to create user ${creds.displayName} (${creds.email})`
-    })
+      code: `failed to create user ${creds.displayName} (${creds.email})`
+    });
   }
 
   if (newlyCreatedUserRecord) {
@@ -97,14 +112,14 @@ app.post("/users", async (req, res) => {
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
             })
             mailer.sendWelcomeMessageWithPresetPassword(creds.email, creds.password, creds.displayName);
-            res.send({
-              msg: `new user ${creds.displayName} created`
+            res.status(201).send({
+              message: `new user ${creds.displayName} created`
             });
           } catch (error) {
             console.error(`failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`);
             await deleteUser(newlyCreatedUserRecord.uid);
             res.send({
-              msg: "failed to create the user"
+              message: "failed to create the user"
             });
           }
         }
@@ -130,13 +145,13 @@ app.post("/users", async (req, res) => {
             })
             mailer.sendWelcomeMessageWithPresetPassword(creds.email, creds.password, creds.displayName);
             res.status(201).send({
-              msg: `new user ${creds.displayName} created`
+              message: `new user ${creds.displayName} created`
             });
           } catch (error) {
             console.error(`failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`);
             await deleteUser(newlyCreatedUserRecord.uid);
             res.send({
-              msg: "failed to create the user"
+              message: "failed to create the user"
             });
           }
         }
