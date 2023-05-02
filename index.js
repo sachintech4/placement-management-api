@@ -71,6 +71,9 @@ app.post("/users", async (req, res) => {
       `failed to create user ${creds.displayName} (${creds.email})`
     );
     // todo: return request failed as the res
+    res.status(403).send({
+      msg: `failed to create user ${creds.displayName} (${creds.email})`
+    })
   }
 
   if (newlyCreatedUserRecord) {
@@ -126,7 +129,7 @@ app.post("/users", async (req, res) => {
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
             })
             mailer.sendWelcomeMessageWithPresetPassword(creds.email, creds.password, creds.displayName);
-            res.send({
+            res.status(201).send({
               msg: `new user ${creds.displayName} created`
             });
           } catch (error) {
