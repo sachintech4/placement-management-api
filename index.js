@@ -87,7 +87,8 @@ app.post("/users", async (req, res) => {
 
     // handle rest of the errors
     res.status(403).send({
-      code: `failed to create user ${creds.displayName} (${creds.email})`
+      code: "general-error",
+      message: `failed to create user ${creds.displayName} (${creds.email})`
     });
   }
 
@@ -113,13 +114,15 @@ app.post("/users", async (req, res) => {
             })
             mailer.sendWelcomeMessageWithPresetPassword(creds.email, creds.password, creds.displayName);
             res.status(201).send({
+              code: "success",
               message: `new user ${creds.displayName} created`
             });
           } catch (error) {
             console.error(`failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`);
             await deleteUser(newlyCreatedUserRecord.uid);
             res.send({
-              message: "failed to create the user"
+              code: "general-error",
+              message: `failed to create user ${creds.displayName} (${creds.email})`,
             });
           }
         }
@@ -158,13 +161,15 @@ app.post("/users", async (req, res) => {
             })
             mailer.sendWelcomeMessageWithPresetPassword(creds.email, creds.password, creds.displayName);
             res.status(201).send({
+              code: "success",
               message: `new user ${creds.displayName} created`
             });
           } catch (error) {
             console.error(`failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`);
             await deleteUser(newlyCreatedUserRecord.uid);
             res.send({
-              message: "failed to create the user"
+              code: "general-error",
+              message: `failed to create user ${creds.displayName} (${creds.email})`,
             });
           }
         }
