@@ -142,6 +142,19 @@ app.post("/users", async (req, res) => {
               dob: req.body.dob,
               rollNo: req.body.rollNo,
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              is_placed: false,
+              batch: null,
+              placements_applied_to: [],
+              tenth_percentage: null,
+              twelfth_percentage: null,
+              tenth_year_of_passing: null,
+              twelfth_year_of_passing: null,
+              ug_cgpa: null,
+              ug_year_of_passing: null,
+              pg_cgpa: null,
+              pg_year_of_passing: null,
+              contact_number: null,
+              resume: null,
             })
             mailer.sendWelcomeMessageWithPresetPassword(creds.email, creds.password, creds.displayName);
             res.status(201).send({
