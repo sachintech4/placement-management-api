@@ -38,7 +38,6 @@ const deleteUser = async (uid) => {
 
 // create new user
 app.post("/users", async (req, res) => {
-
   const {
     email,
     password = generatePassword(),
@@ -58,7 +57,9 @@ app.post("/users", async (req, res) => {
       await admin.auth().setCustomUserClaims(uid, claims);
       return true;
     } catch (error) {
-      console.error(`failed to set custom claims for the user ${creds.displayName} (${creds.email})`);
+      console.error(
+        `failed to set custom claims for the user ${creds.displayName} (${creds.email})`
+      );
       return null;
     }
   };
@@ -75,20 +76,20 @@ app.post("/users", async (req, res) => {
     console.error(error);
 
     // prepare and send the res
-    
+
     // handle "email already exists" error
     if (error.code === "auth/email-already-exists") {
       res.status(403).send({
         code: "email-already-exists",
         message: "Given email already exists for another user",
       });
-      return;      
+      return;
     }
 
     // handle rest of the errors
     res.status(403).send({
       code: "general-error",
-      message: `failed to create user ${creds.displayName} (${creds.email})`
+      message: `failed to create user ${creds.displayName} (${creds.email})`,
     });
   }
 
@@ -97,12 +98,16 @@ app.post("/users", async (req, res) => {
     switch (req.body.role) {
       case "tpo": {
         // set customClaims (role)
-        const isRoleSet = setCustomUserClaims(newlyCreatedUserRecord.uid, { role: "tpo" });
+        const isRoleSet = setCustomUserClaims(newlyCreatedUserRecord.uid, {
+          role: "tpo",
+        });
 
         // create user corresponsing document in the db
         if (isRoleSet) {
           try {
-            const userRef = db.collection("users_tpo").doc(newlyCreatedUserRecord.uid);
+            const userRef = db
+              .collection("users_tpo")
+              .doc(newlyCreatedUserRecord.uid);
             userRef.set({
               firstName: req.body.firstName,
               lastName: req.body.lastName,
@@ -111,14 +116,20 @@ app.post("/users", async (req, res) => {
               gender: req.body.gender,
               dob: req.body.dob,
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            })
-            mailer.sendWelcomeMessageWithPresetPassword(creds.email, creds.password, creds.displayName);
+            });
+            mailer.sendWelcomeMessageWithPresetPassword(
+              creds.email,
+              creds.password,
+              creds.displayName
+            );
             res.status(201).send({
               code: "success",
-              message: `new user ${creds.displayName} created`
+              message: `new user ${creds.displayName} created`,
             });
           } catch (error) {
-            console.error(`failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`);
+            console.error(
+              `failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`
+            );
             await deleteUser(newlyCreatedUserRecord.uid);
             res.send({
               code: "general-error",
@@ -130,12 +141,16 @@ app.post("/users", async (req, res) => {
       }
       case "student": {
         // set customClaims (role)
-        const isRoleSet = setCustomUserClaims(newlyCreatedUserRecord.uid, { role: "student" });
+        const isRoleSet = setCustomUserClaims(newlyCreatedUserRecord.uid, {
+          role: "student",
+        });
 
         // create user corresponsing document in the db
         if (isRoleSet) {
           try {
-            const userRef = db.collection("users_student").doc(newlyCreatedUserRecord.uid);
+            const userRef = db
+              .collection("users_student")
+              .doc(newlyCreatedUserRecord.uid);
             userRef.set({
               firstName: req.body.firstName,
               lastName: req.body.lastName,
@@ -158,14 +173,20 @@ app.post("/users", async (req, res) => {
               pg_year_of_passing: null,
               contact_number: null,
               resume: null,
-            })
-            mailer.sendWelcomeMessageWithPresetPassword(creds.email, creds.password, creds.displayName);
+            });
+            mailer.sendWelcomeMessageWithPresetPassword(
+              creds.email,
+              creds.password,
+              creds.displayName
+            );
             res.status(201).send({
               code: "success",
-              message: `new user ${creds.displayName} created`
+              message: `new user ${creds.displayName} created`,
             });
           } catch (error) {
-            console.error(`failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`);
+            console.error(
+              `failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`
+            );
             await deleteUser(newlyCreatedUserRecord.uid);
             res.send({
               code: "general-error",
