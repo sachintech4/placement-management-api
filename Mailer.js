@@ -17,7 +17,7 @@ class Mailer {
       return `
         <p>Hello ${userName},</p>
         <p>An account has been created for you in the TIMSCDR Placement Manager webapp. Your email adddress is <span style="font-weight: bold;">${receiverEmailId}</span> and your login password is <span style="font-weight: bold;">${presetPassword}<span/>.</p>
-        <p>We strongly recommend that you change the default password as soon as possible.</p>
+        <p><em>We strongly recommend that you change the default password as soon as possible.<em/></p>
         <p>Thank you</p>
       `;
     };
