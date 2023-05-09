@@ -32,9 +32,9 @@ const deleteUsers = async (uid) => {
   console.log(uids);
   try {
     await admin.auth().deleteUsers(uids);
-    console.log(`user ${creds.displayName} delete successfully`);
+    console.log(`user deleted successfully`);
   } catch (error) {
-    console.error(`failed to delete user ${creds.displayName}`);
+    console.error(`failed to delete user`);
   }
 };
 
@@ -46,9 +46,9 @@ const deleteStudentsDocuments = async (studentUids) => {
       const userRef = db.collection("users_student").doc(uid);
       await userRef.delete();
     };
-    console.log("Users deleted successfully");
+    console.log("Student docs deleted successfully");
   } catch (error) {
-    console.error("Error deleting users");
+    console.error("Error deleting student docs");
   }
 }
 
@@ -221,18 +221,16 @@ app.post("/users", async (req, res) => {
   }
 });
 
-// app.delete("/students", async (req, res) => {
-//   const reqData = JSON.parse(req.body);
-//   const studentUids = reqData.rows;
-//   console.log(studentUids);
-//   try {
-//     // await deleteUsers(studentUids);
-//     await deleteStudentsDocuments("41s4gjH3BQgAxvnkDBDic9a5T8G2");
-//     console.log("deleted successfully");
-//   } catch (error) {
-//     console.error("error deleting")
-//   }
-
-// });
+app.delete("/students", async (req, res) => {
+  const reqData = JSON.parse(req.body);
+  const studentUids = reqData.rows;
+  try {
+    await deleteUsers("KxuYcJPqedYpyH2iOBhNK3qZUYq1");
+    await deleteStudentsDocuments("KxuYcJPqedYpyH2iOBhNK3qZUYq1");
+    console.log("deleted successfully");
+  } catch (error) {
+    console.error("error deleting")
+  }
+});
 
 export { app };
