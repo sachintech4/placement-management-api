@@ -225,11 +225,19 @@ app.delete("/students", async (req, res) => {
   const reqData = JSON.parse(req.body);
   const studentUids = reqData.rows;
   try {
-    await deleteUsers("KxuYcJPqedYpyH2iOBhNK3qZUYq1");
-    await deleteStudentsDocuments("KxuYcJPqedYpyH2iOBhNK3qZUYq1");
+    await deleteUsers(studentUids);
+    await deleteStudentsDocuments(studentUids);
     console.log("deleted successfully");
+    res.send({
+      code: "success",
+      message: "Student's account and records deleted successfully"
+    });
   } catch (error) {
-    console.error("error deleting")
+    console.error("error deleting");
+    res.send({
+      code: "failed",
+      message: "Failed to delete student's account and records"
+    });
   }
 });
 
