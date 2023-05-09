@@ -1,4 +1,4 @@
-import express from "express";
+import express, { json } from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 import fs from "fs";
@@ -27,14 +27,29 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // utils
-const deleteUser = async (uid) => {
+const deleteUsers = async (uid) => {
+  const uids = Array.isArray(uid) ? uid : Array.of(uid);
+  console.log(uids);
   try {
-    await admin.auth().deleteUser(uid);
+    await admin.auth().deleteUsers(uids);
     console.log(`user ${creds.displayName} delete successfully`);
   } catch (error) {
     console.error(`failed to delete user ${creds.displayName}`);
   }
 };
+
+// const deleteStudentsDocuments = async (uid) => {
+//   try {
+//     await deleteUsers(studentUids);
+//     for (const uid of studentUids) {
+//       const userRef = db.collection("users_student").doc(uid);
+//       await userRef.delete();
+//     };
+//     console.log("Users deleted successfully");
+//   } catch (error) {
+//     console.error("Error deleting users");
+//   }
+// }
 
 // create new user
 app.post("/users", async (req, res) => {
@@ -130,7 +145,7 @@ app.post("/users", async (req, res) => {
             console.error(
               `failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`
             );
-            await deleteUser(newlyCreatedUserRecord.uid);
+            await deleteUsers(newlyCreatedUserRecord.uid);
             res.send({
               code: "general-error",
               message: `failed to create user ${creds.displayName} (${creds.email})`,
@@ -187,7 +202,7 @@ app.post("/users", async (req, res) => {
             console.error(
               `failed to create the corresponding db record for the user ${creds.displayName} (${creds.email})`
             );
-            await deleteUser(newlyCreatedUserRecord.uid);
+            await deleteUsers(newlyCreatedUserRecord.uid);
             res.send({
               code: "general-error",
               message: `failed to create user ${creds.displayName} (${creds.email})`,
@@ -204,5 +219,18 @@ app.post("/users", async (req, res) => {
     }
   }
 });
+
+// app.delete("/students", async (req, res) => {
+//   const reqData = JSON.parse(req.body);
+//   const studentUids = reqData.rows;
+//   console.log(studentUids);
+//   try {
+//     await deleteUsers(studentUids);
+//     console.log("deleted successfully");
+//   } catch (error) {
+//     console.error("error deleting")
+//   }
+
+// });
 
 export { app };
