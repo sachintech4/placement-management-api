@@ -38,18 +38,19 @@ const deleteUsers = async (uid) => {
   }
 };
 
-// const deleteStudentsDocuments = async (uid) => {
-//   try {
-//     await deleteUsers(studentUids);
-//     for (const uid of studentUids) {
-//       const userRef = db.collection("users_student").doc(uid);
-//       await userRef.delete();
-//     };
-//     console.log("Users deleted successfully");
-//   } catch (error) {
-//     console.error("Error deleting users");
-//   }
-// }
+const deleteStudentsDocuments = async (studentUids) => {
+  const uids = Array.isArray(studentUids) ? studentUids : Array.of(studentUids);
+
+  try {
+    for (const uid of uids) {
+      const userRef = db.collection("users_student").doc(uid);
+      await userRef.delete();
+    };
+    console.log("Users deleted successfully");
+  } catch (error) {
+    console.error("Error deleting users");
+  }
+}
 
 // create new user
 app.post("/users", async (req, res) => {
@@ -225,7 +226,8 @@ app.post("/users", async (req, res) => {
 //   const studentUids = reqData.rows;
 //   console.log(studentUids);
 //   try {
-//     await deleteUsers(studentUids);
+//     // await deleteUsers(studentUids);
+//     await deleteStudentsDocuments("41s4gjH3BQgAxvnkDBDic9a5T8G2");
 //     console.log("deleted successfully");
 //   } catch (error) {
 //     console.error("error deleting")
