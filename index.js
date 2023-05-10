@@ -29,7 +29,6 @@ app.use(cors(corsOptions));
 // utils
 const deleteUsers = async (uid) => {
   const uids = Array.isArray(uid) ? uid : Array.of(uid);
-  console.log(uids);
   try {
     await admin.auth().deleteUsers(uids);
     console.log(`user deleted successfully`);
