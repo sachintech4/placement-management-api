@@ -223,34 +223,38 @@ app.post("/users", async (req, res) => {
 });
 
 app.delete("/students", async (req, res) => {
-  const reqData = JSON.parse(req.body);
-  const idToken = reqData.token;
-  const decodedToken = await admin.auth().verifyIdToken(idToken);
-  
-  if( decodedToken.role === "admin" ) {
-    const studentUids = reqData.rows;
-    
-    try {
-      await deleteUsers(studentUids);
-      await deleteStudentsDocuments(studentUids);
-      console.log("deleted successfully");
-      res.send({
-        code: "success",
-        message: "Student's account and records deleted successfully",
-      });
-    } catch (error) {
-      console.error("error deleting");
-      res.send({
+  try {
+    const reqData = JSON.parse(req.body);
+    const idToken = reqData.token;
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    if (decodedToken.role !== "admin") {
+      return res.status(401).json({
         code: "failed",
-        message: "Failed to delete student's account and records",
+        message: "Not authorized to delete users",
       });
     }
-   } else {
-    res.send({
+
+    const studentUids = reqData.rows;
+
+    // Delete users and documents in parallel
+    await Promise.all([
+      deleteUsers(studentUids),
+      deleteStudentsDocuments(studentUids),
+    ]);
+
+    console.log("deleted successfully");
+    return res.json({
+      code: "success",
+      message: "Student's account and records deleted successfully",
+    });
+  } catch (error) {
+    console.error("error deleting", error);
+    return res.status(500).json({
       code: "failed",
-      message: "Not authorized to delete users",
-    })
-   }
+      message: "Failed to delete student's account and records",
+    });
+  }
 });
 
 export { app };
