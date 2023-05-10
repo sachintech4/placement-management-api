@@ -39,7 +39,7 @@ const deleteUsers = async (uid) => {
 
 const deleteUserDocuments = async (studentUids, dbRef) => {
   const uids = Array.isArray(studentUids) ? studentUids : Array.of(studentUids);
-
+  // note: explore/learn about using async-await with loops
   try {
     for (const uid of uids) {
       const userRef = db.collection(dbRef).doc(uid);
@@ -51,6 +51,7 @@ const deleteUserDocuments = async (studentUids, dbRef) => {
   }
 }
 
+// todo: authenticate the requesting user's token
 // create new user
 app.post("/users", async (req, res) => {
   const {
@@ -221,12 +222,12 @@ app.post("/users", async (req, res) => {
   }
 });
 
-
 // delete students account and documents
 app.delete("/students", async (req, res) => {
   try {
     const reqData = JSON.parse(req.body);
     const idToken = reqData.token;
+    // todo: put this statement in a try-catch block
     const decodedToken = await admin.auth().verifyIdToken(idToken);
 
     if (decodedToken.role !== "admin") {
