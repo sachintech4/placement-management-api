@@ -223,22 +223,34 @@ app.post("/users", async (req, res) => {
 
 app.delete("/students", async (req, res) => {
   const reqData = JSON.parse(req.body);
-  const studentUids = reqData.rows;
-  try {
-    await deleteUsers(studentUids);
-    await deleteStudentsDocuments(studentUids);
-    console.log("deleted successfully");
-    res.send({
-      code: "success",
-      message: "Student's account and records deleted successfully"
-    });
-  } catch (error) {
-    console.error("error deleting");
+  const idToken = reqData.token;
+  const decodedToken = await admin.auth().verifyIdToken(idToken);
+  
+  if( decodedToken.role === "admin" ) {
+    const studentUids = reqData.rows;
+    
+    try {
+      await deleteUsers(studentUids);
+      await deleteStudentsDocuments(studentUids);
+      console.log("deleted successfully");
+      res.send({
+        code: "success",
+        message: "Student's account and records deleted successfully",
+      });
+    } catch (error) {
+      console.error("error deleting");
+      res.send({
+        code: "failed",
+        message: "Failed to delete student's account and records",
+      });
+    }
+   } else {
     res.send({
       code: "failed",
-      message: "Failed to delete student's account and records"
-    });
-  }
+      message: "Not authorized to delete users",
+    })
+   }
+
 });
 
 export { app };
