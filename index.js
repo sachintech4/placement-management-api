@@ -132,6 +132,7 @@ app.post("/users", async (req, res) => {
               gender: req.body.gender,
               dob: req.body.dob,
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              contactNumber: null,
             });
             mailer.sendWelcomeMessageWithPresetPassword(
               creds.email,
@@ -250,7 +251,6 @@ app.delete("/students", async (req, res) => {
       message: "Not authorized to delete users",
     })
    }
-
 });
 
 export { app };
