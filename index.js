@@ -38,12 +38,12 @@ const deleteUsers = async (uid) => {
   }
 };
 
-const deleteStudentsDocuments = async (studentUids) => {
+const deleteUserDocuments = async (studentUids, dbRef) => {
   const uids = Array.isArray(studentUids) ? studentUids : Array.of(studentUids);
 
   try {
     for (const uid of uids) {
-      const userRef = db.collection("users_student").doc(uid);
+      const userRef = db.collection(dbRef).doc(uid);
       await userRef.delete();
     };
     console.log("Student docs deleted successfully");
@@ -222,6 +222,8 @@ app.post("/users", async (req, res) => {
   }
 });
 
+
+// delete students account and documents
 app.delete("/students", async (req, res) => {
   try {
     const reqData = JSON.parse(req.body);
@@ -240,7 +242,43 @@ app.delete("/students", async (req, res) => {
     // Delete users and documents in parallel
     await Promise.all([
       deleteUsers(studentUids),
-      deleteStudentsDocuments(studentUids),
+      deleteUserDocuments(studentUids, "users_student"),
+    ]);
+
+    console.log("deleted successfully");
+    return res.json({
+      code: "success",
+      message: "Student's account and records deleted successfully",
+    });
+  } catch (error) {
+    console.error("error deleting", error);
+    return res.status(500).json({
+      code: "failed",
+      message: "Failed to delete student's account and records",
+    });
+  }
+});
+
+// delete Tpos account and documents
+app.delete("/tpos", async (req, res) => {
+  try {
+    const reqData = JSON.parse(req.body);
+    const idToken = reqData.token;
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    if (decodedToken.role !== "admin") {
+      return res.status(401).json({
+        code: "failed",
+        message: "Not authorized to delete users",
+      });
+    }
+
+    const tpoUids = reqData.rows;
+
+    // Delete users and documents in parallel
+    await Promise.all([
+      deleteUsers(tpoUids),
+      deleteUserDocuments(tpoUids, "users_tpo"),
     ]);
 
     console.log("deleted successfully");
