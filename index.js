@@ -295,7 +295,39 @@ app.delete("/deleteTpos", async (req, res) => {
   }
 });
 
-
 // Create new company
-app.post("")
+app.post("/addNewCompany", async (req, res) => {
+  try {
+    const idToken = req.body.token;
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    if (decodedToken.role !== "tpo") {
+      return res.status(401).json({
+        code: "failed",
+        message: "Not authorized to add companies",
+      });
+    }
+
+    const data = req.body.details;
+    data.studentsPlaced =[];
+    const companiesCollectionRef = db.collection("companies");
+
+    // Adding a new document with an auto-generated ID
+    const newCompanyRef = companiesCollectionRef.doc();
+    newCompanyRef.set(data);
+
+    console.log("successfully added a new company");
+    res.json({
+      code: "success",
+      message: "Successfully added a new company.",
+    })
+  } catch (error) {
+    console.error("Error adding new company");
+    res.json({
+      code: "failed",
+      message: "Failed to add a new company",
+    });
+  }
+});
+
 export { app };
