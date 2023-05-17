@@ -223,7 +223,7 @@ app.post("/users", async (req, res) => {
 });
 
 // delete students account and documents
-app.delete("/students", async (req, res) => {
+app.delete("/deleteStudents", async (req, res) => {
   try {
     const reqData = JSON.parse(req.body);
     const idToken = reqData.token;
@@ -260,7 +260,7 @@ app.delete("/students", async (req, res) => {
 });
 
 // delete Tpos account and documents
-app.delete("/tpos", async (req, res) => {
+app.delete("/deleteTpos", async (req, res) => {
   try {
     const reqData = JSON.parse(req.body);
     const idToken = reqData.token;
@@ -295,4 +295,7 @@ app.delete("/tpos", async (req, res) => {
   }
 });
 
+
+// Create new company
+app.post("")
 export { app };
