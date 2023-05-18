@@ -37,8 +37,8 @@ const deleteUsers = async (uid) => {
   }
 };
 
-const deleteUserDocuments = async (studentUids, dbRef) => {
-  const uids = Array.isArray(studentUids) ? studentUids : Array.of(studentUids);
+const deleteDocuments = async (uidsList, dbRef) => {
+  const uids = Array.isArray(uidsList) ? uidsList : Array.of(uidsList);
   // note: explore/learn about using async-await with loops
   try {
     for (const uid of uids) {
@@ -242,7 +242,7 @@ app.delete("/deleteStudents", async (req, res) => {
     // Delete users and documents in parallel
     await Promise.all([
       deleteUsers(studentUids),
-      deleteUserDocuments(studentUids, "users_student"),
+      deleteDocuments(studentUids, "users_student"),
     ]);
 
     console.log("deleted successfully");
@@ -278,7 +278,7 @@ app.delete("/deleteTpos", async (req, res) => {
     // Delete users and documents in parallel
     await Promise.all([
       deleteUsers(tpoUids),
-      deleteUserDocuments(tpoUids, "users_tpo"),
+      deleteDocuments(tpoUids, "users_tpo"),
     ]);
 
     console.log("deleted successfully");
@@ -326,6 +326,39 @@ app.post("/addNewCompany", async (req, res) => {
     res.json({
       code: "failed",
       message: "Failed to add a new company",
+    });
+  }
+});
+
+app.delete("/deleteCompanies", async (req, res) => {
+  try {
+    const reqData = JSON.parse(req.body);
+    console.log(reqData);
+    const idToken = reqData.token;
+    // todo: put this statement in a try-catch block
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    if (decodedToken.role !== "tpo") {
+      return res.status(401).json({
+        code: "failed",
+        message: "Not authorized to delete users",
+      });
+    }
+
+    const companyUids = reqData.rows;
+
+    await deleteDocuments(companyUids, "companies");
+
+    // console.log("deleted successfully");
+    return res.json({
+      code: "success",
+      message: "Companies deleted successfully",
+    });
+  } catch (error) {
+    console.error("error deleting", error);
+    return res.status(500).json({
+      code: "failed",
+      message: "Failed to delete companies",
     });
   }
 });
