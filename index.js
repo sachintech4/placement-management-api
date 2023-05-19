@@ -45,9 +45,9 @@ const deleteDocuments = async (uidsList, dbRef) => {
       const userRef = db.collection(dbRef).doc(uid);
       await userRef.delete();
     };
-    console.log("Student docs deleted successfully");
+    console.log("Documents deleted successfully");
   } catch (error) {
-    console.error("Error deleting student docs");
+    console.error("Error deleting documents");
   }
 }
 
@@ -333,7 +333,6 @@ app.post("/addNewCompany", async (req, res) => {
 app.delete("/deleteCompanies", async (req, res) => {
   try {
     const reqData = JSON.parse(req.body);
-    console.log(reqData);
     const idToken = reqData.token;
     // todo: put this statement in a try-catch block
     const decodedToken = await admin.auth().verifyIdToken(idToken);
