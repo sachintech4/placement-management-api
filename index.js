@@ -27,6 +27,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // utils
+// delete users
 const deleteUsers = async (uid) => {
   const uids = Array.isArray(uid) ? uid : Array.of(uid);
   try {
@@ -37,6 +38,7 @@ const deleteUsers = async (uid) => {
   }
 };
 
+// delete documents
 const deleteDocuments = async (uidsList, dbRef) => {
   const uids = Array.isArray(uidsList) ? uidsList : Array.of(uidsList);
   // note: explore/learn about using async-await with loops
@@ -330,6 +332,7 @@ app.post("/addNewCompany", async (req, res) => {
   }
 });
 
+// delete company/companies
 app.delete("/deleteCompanies", async (req, res) => {
   try {
     const reqData = JSON.parse(req.body);
@@ -360,6 +363,41 @@ app.delete("/deleteCompanies", async (req, res) => {
       message: "Failed to delete companies",
     });
   }
+});
+
+// add new placement drive
+app.post("/addNewPlacementDrive", async (req, res) => {
+  try {
+    const idToken = req.body.token;
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    if (decodedToken.role !== "tpo") {
+      return res.status(401).json({
+        code: "failed",
+        message: "Not authorized to add companies",
+      });
+    }
+
+    const placementDetails = req.body.details;
+    placementDetails.isActive = false;
+    const placementDriveRef = db.collection("placements");
+
+    // add new placement drive
+    const newPlacementDriveRef = placementDriveRef.doc();
+    newPlacementDriveRef.set(placementDetails);
+
+    console.log("successfully added a new placement drive");
+    res.json({
+      code: "success",
+      message: "Successfully added a new placement drive.",
+    })
+} catch (error) {
+  console.error("Error adding new placement drive");
+  res.json({
+    code: "failed",
+    message: "Failed to add a new placement drive",
+  });
+}
 });
 
 export { app };
