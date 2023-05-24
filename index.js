@@ -1,4 +1,4 @@
-import express, { json } from "express";
+import express, { json, query } from "express";
 import cors from "cors";
 import admin from "firebase-admin";
 import fs from "fs";
@@ -381,6 +381,19 @@ app.post("/addNewPlacementDrive", async (req, res) => {
     const placementDetails = req.body.details;
     placementDetails.isActive = false;
     const placementDriveRef = db.collection("placements");
+
+    try{   
+    const querySnapshot = await placementDriveRef.where("companyUid", "==", placementDetails.companyUid).get();
+
+    if(!querySnapshot.empty) {
+      return res.json({
+        code: "failed",
+        message: `Placement Drive for ${placementDetails.companyName} already exists`,
+      });
+    }
+    } catch (error) {
+      console.log("error fetching placement with same company");
+    }
 
     // add new placement drive
     const newPlacementDriveRef = placementDriveRef.doc();
