@@ -380,6 +380,7 @@ app.post("/addNewPlacementDrive", async (req, res) => {
 
     const placementDetails = req.body.details;
     placementDetails.isActive = false;
+    placementDetails.studentsApplied = [];
     const placementDriveRef = db.collection("placements");
 
     try{   
@@ -411,6 +412,39 @@ app.post("/addNewPlacementDrive", async (req, res) => {
     message: "Failed to add a new placement drive",
   });
 }
+});
+
+// delete placement/placements
+app.delete("/deletePlacements", async (req, res) => {
+  try {
+    const reqData = JSON.parse(req.body);
+    const idToken = reqData.token;
+    // todo: put this statement in a try-catch block
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    if (decodedToken.role !== "tpo") {
+      return res.status(401).json({
+        code: "failed",
+        message: "Not authorized to delete users",
+      });
+    }
+
+    const placementUids = reqData.rows;
+
+    await deleteDocuments(placementUids, "placements");
+
+    // console.log("deleted successfully");
+    return res.json({
+      code: "success",
+      message: "Placements deleted successfully",
+    });
+  } catch (error) {
+    console.error("error deleting", error);
+    return res.status(500).json({
+      code: "failed",
+      message: "Failed to delete companies",
+    });
+  }
 });
 
 export { app };
