@@ -5,6 +5,7 @@ import fs from "fs";
 import dotenv from "dotenv";
 import { generatePassword } from "./utils.js";
 import mailer from "./Mailer.js";
+import * as XLSX from "xlsx";
 
 dotenv.config();
 
@@ -446,5 +447,30 @@ app.delete("/deletePlacements", async (req, res) => {
     });
   }
 });
+
+// download excel sheet of students applied for a particular placement
+app.get("/downloadExcelSheet", async(req, res) => {
+
+  try {
+    const studentsUid = req.query.students.split(",");
+    console.log(studentsUid);
+
+    const fetchStudentData = async(uid) => {
+
+      const docRef = db.collection("users_student").doc(uid);
+      const docSnapshot = await docRef.get();
+      const docData = docSnapshot.data();
+
+      return docData;
+    };
+
+    const studentsDataPromises = studentsUid.map((uid) => fetchStudentData(uid));
+    const studentsData = await Promise.all(studentsDataPromises);
+
+  } catch (error) {
+    
+  }
+
+})
 
 export { app };
