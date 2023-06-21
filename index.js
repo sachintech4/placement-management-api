@@ -453,7 +453,11 @@ app.get("/downloadExcelSheet", async(req, res) => {
 
   try {
     const studentsUid = req.query.students.split(",");
-    console.log(studentsUid);
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet([]);
+    const headerRow = ["First Name", "Last Name", "Email", "Resume link", "Roll no", "Dob", "Contact No.", "Pg cgpa", "Ug cgpa", "Pg yop", "Ug yop", "Tenth %", "Twelfth %", "Tenth yop", "Twelfth yop"];
+
+    XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: -1 });
 
     const fetchStudentData = async(uid) => {
 
@@ -467,8 +471,38 @@ app.get("/downloadExcelSheet", async(req, res) => {
     const studentsDataPromises = studentsUid.map((uid) => fetchStudentData(uid));
     const studentsData = await Promise.all(studentsDataPromises);
 
+    studentsData.forEach((studentData) => {
+      const row = [
+        studentData.firstName,
+        studentData.lastName,
+        studentData.email,
+        studentData.resume,
+        studentData.rollNo,
+        `${studentData.dob.day}/${studentData.dob.month}/${studentData.dob.year}`,
+        studentData.contactNumber,
+        studentData.pgCgpa,
+        studentData.ugCgpa,
+        studentData.pgYearOfPassing,
+        studentData.ugYearOfPassing,
+        studentData.tenthPercentage,
+        studentData.twelfthPercentage,
+        studentData.tenthYearOfPassing,
+        studentData.twelfthYearOfPassing
+      ];
+
+      XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
+    });
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+    const excelData = XLSX.write(workbook, { type: "buffer" });
+
+    res.setHeader("Content-Disposition", "attachment; filename=students.xlsx");
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    res.send(excelData);
   } catch (error) {
-    
+    console.error("Error creating Excel sheet:", error);
+    res.status(500).send("Error creating Excel sheet");
   }
 
 })
