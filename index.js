@@ -54,6 +54,28 @@ const deleteDocuments = async (uidsList, dbRef) => {
   }
 }
 
+// move to records
+const moveToRecords = async (uidsList, dbRef) => {
+  const uids = Array.isArray(uidsList) ? uidsList : Array.of(uidsList);
+
+  try {
+    for (const uid of uids) {
+      const userRef = db.collection(dbRef).doc(uid);
+      const userDoc = await userRef.get();
+      const userData = userDoc.data();
+
+      const batchRef = db.collection("records").doc(userData.batch);
+      const studentRef = batchRef.collection("students").doc(uid);
+      await studentRef.set(userData);
+
+      await userRef.delete();
+
+    }
+  } catch (error) {
+    console.error("Error moving documents");
+  }
+}
+
 // todo: authenticate the requesting user's token
 // create new user
 app.post("/users", async (req, res) => {
@@ -181,7 +203,7 @@ app.post("/users", async (req, res) => {
               rollNo: req.body.rollNo,
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
               isPlaced: false,
-              batch: null,
+              batch: req.body.batch,
               placementsAppliedTo: [],
               tenthPercentage: null,
               twelfthPercentage: null,
@@ -226,7 +248,7 @@ app.post("/users", async (req, res) => {
 });
 
 // delete students account and documents
-app.delete("/deleteStudents", async (req, res) => {
+app.delete("/permanentlyDeleteStudents", async (req, res) => {
   try {
     const reqData = JSON.parse(req.body);
     const idToken = reqData.token;
@@ -258,6 +280,43 @@ app.delete("/deleteStudents", async (req, res) => {
     return res.status(500).json({
       code: "failed",
       message: "Failed to delete student's account and records",
+    });
+  }
+});
+
+// delete user students account and move their data to the records
+app.delete("/deleteStudentAndMoveData", async (req, res) => {
+  try {
+    const reqData = JSON.parse(req.body);
+    const idToken = reqData.token;
+    // todo: put this statement in a try-catch block
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    if (decodedToken.role !== "admin") {
+      return res.status(401).json({
+        code: "failed",
+        message: "Not authorized to delete users",
+      });
+    }
+
+    const studentUids = reqData.rows;
+
+    // Delete users and documents in parallel
+    await Promise.all([
+      deleteUsers(studentUids),
+      moveToRecords(studentUids, "users_student"),
+    ]);
+
+    console.log("user deleted and records moved successfully");
+    return res.json({
+      code: "success",
+      message: "Student's account deleted and records moved successfully",
+    });
+  } catch (error) {
+    console.error("error deleting", error);
+    return res.status(500).json({
+      code: "failed",
+      message: "Failed to delete student's account and move records",
     });
   }
 });
@@ -453,6 +512,7 @@ app.get("/downloadExcelSheet", async(req, res) => {
 
   try {
     const studentsUid = req.query.students.split(",");
+    const placementDriveName = req.query.placementDriveName;
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet([]);
     const headerRow = ["First Name", "Last Name", "Email", "Resume link", "Roll no", "Dob", "Contact No.", "Pg cgpa", "Ug cgpa", "Pg yop", "Ug yop", "Tenth %", "Twelfth %", "Tenth yop", "Twelfth yop"];
@@ -493,10 +553,10 @@ app.get("/downloadExcelSheet", async(req, res) => {
       XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
     });
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Students");
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${placementDriveName}`);
     const excelData = XLSX.write(workbook, { type: "buffer" });
 
-    res.setHeader("Content-Disposition", "attachment; filename=students.xlsx");
+    res.setHeader("Content-Disposition", `attachment; filename=${placementDriveName}.xlsx`);
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     res.send(excelData);
