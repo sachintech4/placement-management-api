@@ -65,6 +65,7 @@ const moveToRecords = async (uidsList, dbRef) => {
       const userData = userDoc.data();
 
       const batchRef = db.collection("records").doc(userData.batch);
+      await batchRef.set({uid: userData.batch});
       const studentRef = batchRef.collection("students").doc(uid);
       await studentRef.set(userData);
 
