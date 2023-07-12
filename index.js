@@ -77,6 +77,32 @@ const moveToRecords = async (uidsList, dbRef) => {
   }
 }
 
+// move placements to records
+const moveToPlacementRecords = async (uidsList, dbRef) => {
+  const uids = Array.isArray(uidsList) ? uidsList : Array.of(uidsList);
+
+  try {
+    for (const uid of uids) {
+      const placementRef = db.collection(dbRef).doc(uid);
+      const placementDoc = await placementRef.get();
+      const placementData = placementDoc.data();
+      const createdAtTimestamp = placementData.createdAt;
+      const createdAtDate = createdAtTimestamp.toDate();
+      const year = createdAtDate.getFullYear().toString();
+
+      const batchRef = db.collection("placement_records").doc(year);
+      await batchRef.set({uid: year});
+      const studentRef = batchRef.collection("placements").doc(uid);
+      await studentRef.set(placementData);
+
+      await placementRef.delete();
+
+    }
+  } catch (error) {
+    console.error("Error moving documents");
+  }
+}
+
 // todo: authenticate the requesting user's token
 // create new user
 app.post("/users", async (req, res) => {
@@ -204,6 +230,11 @@ app.post("/users", async (req, res) => {
               rollNo: req.body.rollNo,
               createdAt: admin.firestore.FieldValue.serverTimestamp(),
               isPlaced: false,
+              isPlacedAt: null,
+              offerLetter: null,
+              salaryPackage: null,
+              tempCompany: null,
+              tempSalaryPackage: null,
               batch: req.body.batch,
               placementsAppliedTo: [],
               tenthPercentage: null,
@@ -347,13 +378,13 @@ app.delete("/deleteTpos", async (req, res) => {
     console.log("deleted successfully");
     return res.json({
       code: "success",
-      message: "Student's account and records deleted successfully",
+      message: "TPO's account and records deleted successfully",
     });
   } catch (error) {
     console.error("error deleting", error);
     return res.status(500).json({
       code: "failed",
-      message: "Failed to delete student's account and records",
+      message: "Failed to delete TPO's account and records",
     });
   }
 });
@@ -442,6 +473,8 @@ app.post("/addNewPlacementDrive", async (req, res) => {
     const placementDetails = req.body.details;
     placementDetails.isActive = false;
     placementDetails.studentsApplied = [];
+    placementDetails.createdAt = admin.firestore.FieldValue.serverTimestamp();
+    placementDetails.studentsPlaced = [];
     const placementDriveRef = db.collection("placements");
 
     try{   
@@ -475,8 +508,8 @@ app.post("/addNewPlacementDrive", async (req, res) => {
 }
 });
 
-// delete placement/placements
-app.delete("/deletePlacements", async (req, res) => {
+// delete placement/placements permanently
+app.delete("/permanentlyDeletePlacements", async (req, res) => {
   try {
     const reqData = JSON.parse(req.body);
     const idToken = reqData.token;
@@ -508,6 +541,40 @@ app.delete("/deletePlacements", async (req, res) => {
   }
 });
 
+// move placemnt data to the placement records
+app.delete("/moveToPlacementRecords", async (req, res) => {
+  try {
+    const reqData = JSON.parse(req.body);
+    const idToken = reqData.token;
+    // todo: put this statement in a try-catch block
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+
+    if (decodedToken.role !== "tpo") {
+      return res.status(401).json({
+        code: "failed",
+        message: "Not authorized to delete users",
+      });
+    }
+
+    const placementUids = reqData.rows;
+
+    // Delete users and documents in parallel
+    await moveToPlacementRecords(placementUids, "placements");
+
+    console.log("Placement moved to records successfully");
+    return res.json({
+      code: "success",
+      message: "Placement/placement's moved to records successfully",
+    });
+  } catch (error) {
+    console.error("error deleting", error);
+    return res.status(500).json({
+      code: "failed",
+      message: "Failed to move placement to records",
+    });
+  }
+});
+
 // download excel sheet of students applied for a particular placement
 app.get("/downloadExcelSheet", async(req, res) => {
 
@@ -518,13 +585,78 @@ app.get("/downloadExcelSheet", async(req, res) => {
     const worksheet = XLSX.utils.json_to_sheet([]);
     const headerRow = ["First Name", "Last Name", "Email", "Resume link", "Roll no", "Dob", "Contact No.", "Pg cgpa", "Ug cgpa", "Pg yop", "Ug yop", "Tenth %", "Twelfth %", "Tenth yop", "Twelfth yop"];
 
-    XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: -1 });
+    XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: 0 });
 
     const fetchStudentData = async(uid) => {
 
       const docRef = db.collection("users_student").doc(uid);
       const docSnapshot = await docRef.get();
       const docData = docSnapshot.data();
+
+      return docData;
+    };
+
+    const studentsDataPromises = studentsUid.map((uid) => fetchStudentData(uid));
+    const studentsData = await Promise.all(studentsDataPromises);
+
+    studentsData.forEach((studentData) => {
+      const row = [
+        studentData.firstName,
+        studentData.lastName,
+        studentData.email,
+        studentData.resume,
+        studentData.rollNo,
+        `${studentData.dob.day}/${studentData.dob.month}/${studentData.dob.year}`,
+        studentData.contactNumber,
+        studentData.pgCgpa,
+        studentData.ugCgpa,
+        studentData.pgYearOfPassing,
+        studentData.ugYearOfPassing,
+        studentData.tenthPercentage,
+        studentData.twelfthPercentage,
+        studentData.tenthYearOfPassing,
+        studentData.twelfthYearOfPassing
+      ];
+
+      XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
+    });
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${placementDriveName}`);
+    const excelData = XLSX.write(workbook, { type: "buffer" });
+
+    res.setHeader("Content-Disposition", `attachment; filename=${placementDriveName}.xlsx`);
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    res.send(excelData);
+  } catch (error) {
+    console.error("Error creating Excel sheet:", error);
+    res.status(500).send("Error creating Excel sheet");
+  }
+
+})
+
+// download excel sheet of students applied for a particular placement from records
+app.get("/downloadExcelSheetFromRecords", async(req, res) => {
+
+  try {
+    const studentsUid = req.query.students.split(",");
+    const placementDriveName = req.query.placementDriveName;
+    const studentBatch = req.query.batch;
+    const year = studentBatch.toString();
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet([]);
+    const headerRow = ["First Name", "Last Name", "Email", "Resume link", "Roll no", "Dob", "Contact No.", "Pg cgpa", "Ug cgpa", "Pg yop", "Ug yop", "Tenth %", "Twelfth %", "Tenth yop", "Twelfth yop"];
+
+    XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: 0 });
+
+    const fetchStudentData = async(uid) => {
+      const uidToString = uid.toString().trim();
+      const dbRef = db.collection(`records`).doc(year);
+      const docRef = dbRef.collection("students").doc(uidToString);
+      const docSnapshot = await docRef.get();
+      const docData = docSnapshot.data();
+
+      console.log(docData);
 
       return docData;
     };
