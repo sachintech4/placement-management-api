@@ -827,4 +827,66 @@ app.get("/downloadExcelSheetFromRecords", async(req, res) => {
 
 })
 
+// download excel sheet of students applied for a particular placement
+app.get("/downloadExcelSheetOfStudents", async(req, res) => {
+
+  try {
+    const studentsUid = req.query.students.split(",");
+    const fileName = req.query.fileName;
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet([]);
+    const headerRow = ["First Name", "Last Name", "Email", "Resume link", "Roll no", "Placement Status", "Placed at", "Date Of Birth", "Contact No.", "Post Graduate CGPA", "Under Graduate CGPA", "Post Graduate Year of Passing", "Under Graduate Year of Passing", "10th %", "12th %", "10th Year of passing", "12th year of passing"];
+
+    XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: 0 });
+
+    const fetchStudentData = async(uid) => {
+
+      const docRef = db.collection("users_student").doc(uid);
+      const docSnapshot = await docRef.get();
+      const docData = docSnapshot.data();
+
+      return docData;
+    };
+
+    const studentsDataPromises = studentsUid.map((uid) => fetchStudentData(uid));
+    const studentsData = await Promise.all(studentsDataPromises);
+
+    studentsData.forEach((studentData) => {
+      const row = [
+        studentData.firstName,
+        studentData.lastName,
+        studentData.email,
+        studentData.resume ? studentData.resume : "-",
+        studentData.rollNo,
+        studentData.isPlaced? "Placed" : "Not Placed",
+        studentData.isPlacedAt ? studentData.isPlacedAt.companyName : "-",
+        `${studentData.dob.day}/${studentData.dob.month}/${studentData.dob.year}`,
+        studentData.contactNumber ? studentData.contactNumber : "-",
+        studentData.pgCgpa ? studentData.pgCgpa : "-",
+        studentData.ugCgpa ? studentData.ugCgpa : "-",
+        studentData.pgYearOfPassing ? studentData.pgYearOfPassing : "-",
+        studentData.ugYearOfPassing ? studentData.ugYearOfPassing : "-",
+        studentData.tenthPercentage ? studentData.tenthPercentage : "-",
+        studentData.twelfthPercentage ? studentData.twelfthPercentage : "-",
+        studentData.tenthYearOfPassing ? studentData.tenthYearOfPassing : "-",
+        studentData.twelfthYearOfPassing ? studentData.twelfthYearOfPassing : "-"
+      ];
+
+      XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: -1 });
+    });
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, `${fileName}`);
+    const excelData = XLSX.write(workbook, { type: "buffer" });
+
+    res.setHeader("Content-Disposition", `attachment; filename=${fileName}.xlsx`);
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    res.send(excelData);
+  } catch (error) {
+    console.error("Error creating Excel sheet:", error);
+    res.status(500).send("Error creating Excel sheet");
+  }
+
+})
+
 export { app };
