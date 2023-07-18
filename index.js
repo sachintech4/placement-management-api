@@ -26,6 +26,7 @@ const corsOptions = {
   optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
+app.use(express.raw({ type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
 
 // utils
 // delete users
@@ -276,6 +277,132 @@ app.post("/users", async (req, res) => {
         console.log(req);
       }
     }
+  }
+});
+
+// create multiple tpo at once
+app.post("/addMultipleTpos", async (req, res) => {
+  const workbook = XLSX.read(req.body, { type: 'buffer' });
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
+
+  try {
+    for (const data of jsonData) {
+      const [id, firstName, lastName, email, gender, contactNumber, dob] = data;
+      const creds = {
+        email: email,
+        password: generatePassword(),
+        displayName: `${firstName} ${lastName}`,
+      };
+
+      const newlyCreatedUserRecord = await admin.auth().createUser(creds);
+
+      await admin.auth().setCustomUserClaims(newlyCreatedUserRecord.uid, {
+        role: "tpo",
+      });
+
+      const userRef = db.collection("users_tpo").doc(newlyCreatedUserRecord.uid);
+      await userRef.set({
+        id: id,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        gender: gender,
+        dob: dob,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        contactNumber: contactNumber,
+      });
+
+      mailer.sendWelcomeMessageWithPresetPassword(
+        creds.email,
+        creds.password,
+        creds.displayName
+      );
+    }
+
+    res.status(201).send({
+      code: "success",
+      message: "All users created successfully",
+    });
+  } catch (error) {
+    console.error("Error creating users:", error);
+    res.status(403).send({
+      code: "general-error",
+      message: "Failed to create users",
+    });
+  }
+});
+
+// create multiple students at once
+app.post("/addMultipleStudents", async (req, res) => {
+  const workbook = XLSX.read(req.body, { type: 'buffer' });
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, range: 1 });
+
+  try {
+    for (const data of jsonData) {
+      const [rollNo, prn, firstName, lastName, batch, email, gender, contactNumber, dob] = data;
+      const creds = {
+        email: email,
+        password: generatePassword(),
+        displayName: `${firstName} ${lastName}`,
+      };
+
+      const newlyCreatedUserRecord = await admin.auth().createUser(creds);
+
+      await admin.auth().setCustomUserClaims(newlyCreatedUserRecord.uid, {
+        role: "student",
+      });
+
+      const userRef = db.collection("users_student").doc(newlyCreatedUserRecord.uid);
+      await userRef.set({
+              firstName: firstName,
+              lastName: lastName,
+              email: email,
+              prn: prn,
+              gender: gender,
+              dob: dob,
+              rollNo: rollNo,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              isPlaced: false,
+              isPlacedAt: null,
+              offerLetter: null,
+              salaryPackage: null,
+              tempCompany: null,
+              tempSalaryPackage: null,
+              batch: batch,
+              placementsAppliedTo: [],
+              tenthPercentage: null,
+              twelfthPercentage: null,
+              tenthYearOfPassing: null,
+              twelfthYearOfPassing: null,
+              ugCgpa: null,
+              ugYearOfPassing: null,
+              pgCgpa: null,
+              pgYearOfPassing: null,
+              contactNumber: contactNumber? contactNumber : null,
+              resume: null,
+      });
+
+      mailer.sendWelcomeMessageWithPresetPassword(
+        creds.email,
+        creds.password,
+        creds.displayName
+      );
+    }
+
+    res.status(201).send({
+      code: "success",
+      message: "All users created successfully",
+    });
+  } catch (error) {
+    console.error("Error creating users:", error);
+    res.status(403).send({
+      code: "general-error",
+      message: "Failed to create users",
+    });
   }
 });
 
@@ -583,7 +710,7 @@ app.get("/downloadExcelSheet", async(req, res) => {
     const placementDriveName = req.query.placementDriveName;
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet([]);
-    const headerRow = ["First Name", "Last Name", "Email", "Resume link", "Roll no", "Dob", "Contact No.", "Pg cgpa", "Ug cgpa", "Pg yop", "Ug yop", "Tenth %", "Twelfth %", "Tenth yop", "Twelfth yop"];
+    const headerRow = ["First Name", "Last Name", "Email", "Resume link", "Roll no", "Date Of Birth", "Contact No.", "Post Graduate CGPA", "Under Graduate CGPA", "Post Graduate Year of Passing", "Under Graduate Year of Passing", "10th %", "12th %", "10th Year of passing", "12th year of passing"];
 
     XLSX.utils.sheet_add_aoa(worksheet, [headerRow], { origin: 0 });
 
