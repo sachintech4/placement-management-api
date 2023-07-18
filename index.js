@@ -827,7 +827,7 @@ app.get("/downloadExcelSheetFromRecords", async(req, res) => {
 
 })
 
-// download excel sheet of students applied for a particular placement
+// download excel sheet of placed and not placed students
 app.get("/downloadExcelSheetOfStudents", async(req, res) => {
 
   try {
