@@ -66,6 +66,7 @@ const moveToRecords = async (uidsList, dbRef) => {
       const userData = userDoc.data();
 
       const batchRef = db.collection("records").doc(userData.batch);
+      console.log(userData.batch)
       await batchRef.set({uid: userData.batch});
       const studentRef = batchRef.collection("students").doc(uid);
       await studentRef.set(userData);
@@ -343,7 +344,8 @@ app.post("/addMultipleStudents", async (req, res) => {
 
   try {
     for (const data of jsonData) {
-      const [rollNo, prn, firstName, lastName, batch, email, gender, contactNumber, dob] = data;
+      const [rollNo, prn, firstName, lastName, batchAsnumber, email, gender, contactNumber, dob] = data;
+      const batch = batchAsnumber.toString();
       const creds = {
         email: email,
         password: generatePassword(),
@@ -733,7 +735,9 @@ app.get("/downloadExcelSheet", async(req, res) => {
         studentData.email,
         studentData.resume,
         studentData.rollNo,
-        `${studentData.dob.day}/${studentData.dob.month}/${studentData.dob.year}`,
+        typeof studentData.dob === "object"
+        ? `${studentData.dob.day}/${studentData.dob.month}/${studentData.dob.year}`
+        : studentData.dob,
         studentData.contactNumber,
         studentData.pgCgpa,
         studentData.ugCgpa,
@@ -816,7 +820,7 @@ app.get("/downloadExcelSheetFromRecords", async(req, res) => {
     XLSX.utils.book_append_sheet(workbook, worksheet, `${placementDriveName}`);
     const excelData = XLSX.write(workbook, { type: "buffer" });
 
-    res.setHeader("Content-Disposition", `attachment; filename=${placementDriveName}.xlsx`);
+    res.setHeader("Content-Disposition", `attachment; filename=${placementDriveName}_${year}.xlsx`);
     res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     res.send(excelData);
